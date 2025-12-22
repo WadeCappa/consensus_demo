@@ -1,0 +1,26 @@
+syntax = "proto3";
+option go_package = "github.com/WadeCappa/consensus/pkg/go/consensus/v1;consensuspb";
+
+package consensus;
+
+service Consensus {
+  rpc Put (PutRequest) returns (PutResponse) {}
+  rpc Get (GetRequest) returns (GetResponse) {}
+}
+
+message PutRequest {
+  uint64 version = 1;
+  string key = 2;
+  bytes data = 3;
+}
+
+message PutResponse {}
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  uint64 version = 1;
+  bytes data = 2;
+}
