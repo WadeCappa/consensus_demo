@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v3.19.6
-// source: consensus/v1/consensus.proto
+// source: kvstore/v1/kvstore.proto
 
-package consensuspb
+package kvstorepb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -32,7 +32,7 @@ type PutRequest struct {
 
 func (x *PutRequest) Reset() {
 	*x = PutRequest{}
-	mi := &file_consensus_v1_consensus_proto_msgTypes[0]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *PutRequest) String() string {
 func (*PutRequest) ProtoMessage() {}
 
 func (x *PutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_v1_consensus_proto_msgTypes[0]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *PutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutRequest.ProtoReflect.Descriptor instead.
 func (*PutRequest) Descriptor() ([]byte, []int) {
-	return file_consensus_v1_consensus_proto_rawDescGZIP(), []int{0}
+	return file_kvstore_v1_kvstore_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PutRequest) GetVersion() uint64 {
@@ -89,7 +89,7 @@ type PutResponse struct {
 
 func (x *PutResponse) Reset() {
 	*x = PutResponse{}
-	mi := &file_consensus_v1_consensus_proto_msgTypes[1]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +101,7 @@ func (x *PutResponse) String() string {
 func (*PutResponse) ProtoMessage() {}
 
 func (x *PutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_v1_consensus_proto_msgTypes[1]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +114,7 @@ func (x *PutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutResponse.ProtoReflect.Descriptor instead.
 func (*PutResponse) Descriptor() ([]byte, []int) {
-	return file_consensus_v1_consensus_proto_rawDescGZIP(), []int{1}
+	return file_kvstore_v1_kvstore_proto_rawDescGZIP(), []int{1}
 }
 
 type GetRequest struct {
@@ -126,7 +126,7 @@ type GetRequest struct {
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
-	mi := &file_consensus_v1_consensus_proto_msgTypes[2]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -138,7 +138,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_v1_consensus_proto_msgTypes[2]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -151,7 +151,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_consensus_v1_consensus_proto_rawDescGZIP(), []int{2}
+	return file_kvstore_v1_kvstore_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetRequest) GetKey() string {
@@ -171,7 +171,7 @@ type GetResponse struct {
 
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
-	mi := &file_consensus_v1_consensus_proto_msgTypes[3]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -183,7 +183,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_v1_consensus_proto_msgTypes[3]
+	mi := &file_kvstore_v1_kvstore_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -196,7 +196,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_consensus_v1_consensus_proto_rawDescGZIP(), []int{3}
+	return file_kvstore_v1_kvstore_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetResponse) GetVersion() uint64 {
@@ -213,11 +213,11 @@ func (x *GetResponse) GetData() []byte {
 	return nil
 }
 
-var File_consensus_v1_consensus_proto protoreflect.FileDescriptor
+var File_kvstore_v1_kvstore_proto protoreflect.FileDescriptor
 
-const file_consensus_v1_consensus_proto_rawDesc = "" +
+const file_kvstore_v1_kvstore_proto_rawDesc = "" +
 	"\n" +
-	"\x1cconsensus/v1/consensus.proto\x12\tconsensus\"L\n" +
+	"\x18kvstore/v1/kvstore.proto\x12\akvstore\"L\n" +
 	"\n" +
 	"PutRequest\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x04R\aversion\x12\x10\n" +
@@ -229,35 +229,35 @@ const file_consensus_v1_consensus_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\";\n" +
 	"\vGetResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x04R\aversion\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\fR\x04data2{\n" +
-	"\tConsensus\x126\n" +
-	"\x03Put\x12\x15.consensus.PutRequest\x1a\x16.consensus.PutResponse\"\x00\x126\n" +
-	"\x03Get\x12\x15.consensus.GetRequest\x1a\x16.consensus.GetResponse\"\x00B@Z>github.com/WadeCappa/consensus/pkg/go/consensus/v1;consensuspbb\x06proto3"
+	"\x04data\x18\x02 \x01(\fR\x04data2q\n" +
+	"\akvstore\x122\n" +
+	"\x03Put\x12\x13.kvstore.PutRequest\x1a\x14.kvstore.PutResponse\"\x00\x122\n" +
+	"\x03Get\x12\x13.kvstore.GetRequest\x1a\x14.kvstore.GetResponse\"\x00B<Z:github.com/WadeCappa/consensus/pkg/go/kvstore/v1;kvstorepbb\x06proto3"
 
 var (
-	file_consensus_v1_consensus_proto_rawDescOnce sync.Once
-	file_consensus_v1_consensus_proto_rawDescData []byte
+	file_kvstore_v1_kvstore_proto_rawDescOnce sync.Once
+	file_kvstore_v1_kvstore_proto_rawDescData []byte
 )
 
-func file_consensus_v1_consensus_proto_rawDescGZIP() []byte {
-	file_consensus_v1_consensus_proto_rawDescOnce.Do(func() {
-		file_consensus_v1_consensus_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_consensus_v1_consensus_proto_rawDesc), len(file_consensus_v1_consensus_proto_rawDesc)))
+func file_kvstore_v1_kvstore_proto_rawDescGZIP() []byte {
+	file_kvstore_v1_kvstore_proto_rawDescOnce.Do(func() {
+		file_kvstore_v1_kvstore_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_kvstore_v1_kvstore_proto_rawDesc), len(file_kvstore_v1_kvstore_proto_rawDesc)))
 	})
-	return file_consensus_v1_consensus_proto_rawDescData
+	return file_kvstore_v1_kvstore_proto_rawDescData
 }
 
-var file_consensus_v1_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_consensus_v1_consensus_proto_goTypes = []any{
-	(*PutRequest)(nil),  // 0: consensus.PutRequest
-	(*PutResponse)(nil), // 1: consensus.PutResponse
-	(*GetRequest)(nil),  // 2: consensus.GetRequest
-	(*GetResponse)(nil), // 3: consensus.GetResponse
+var file_kvstore_v1_kvstore_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_kvstore_v1_kvstore_proto_goTypes = []any{
+	(*PutRequest)(nil),  // 0: kvstore.PutRequest
+	(*PutResponse)(nil), // 1: kvstore.PutResponse
+	(*GetRequest)(nil),  // 2: kvstore.GetRequest
+	(*GetResponse)(nil), // 3: kvstore.GetResponse
 }
-var file_consensus_v1_consensus_proto_depIdxs = []int32{
-	0, // 0: consensus.Consensus.Put:input_type -> consensus.PutRequest
-	2, // 1: consensus.Consensus.Get:input_type -> consensus.GetRequest
-	1, // 2: consensus.Consensus.Put:output_type -> consensus.PutResponse
-	3, // 3: consensus.Consensus.Get:output_type -> consensus.GetResponse
+var file_kvstore_v1_kvstore_proto_depIdxs = []int32{
+	0, // 0: kvstore.kvstore.Put:input_type -> kvstore.PutRequest
+	2, // 1: kvstore.kvstore.Get:input_type -> kvstore.GetRequest
+	1, // 2: kvstore.kvstore.Put:output_type -> kvstore.PutResponse
+	3, // 3: kvstore.kvstore.Get:output_type -> kvstore.GetResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -265,26 +265,26 @@ var file_consensus_v1_consensus_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_consensus_v1_consensus_proto_init() }
-func file_consensus_v1_consensus_proto_init() {
-	if File_consensus_v1_consensus_proto != nil {
+func init() { file_kvstore_v1_kvstore_proto_init() }
+func file_kvstore_v1_kvstore_proto_init() {
+	if File_kvstore_v1_kvstore_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_v1_consensus_proto_rawDesc), len(file_consensus_v1_consensus_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kvstore_v1_kvstore_proto_rawDesc), len(file_kvstore_v1_kvstore_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_consensus_v1_consensus_proto_goTypes,
-		DependencyIndexes: file_consensus_v1_consensus_proto_depIdxs,
-		MessageInfos:      file_consensus_v1_consensus_proto_msgTypes,
+		GoTypes:           file_kvstore_v1_kvstore_proto_goTypes,
+		DependencyIndexes: file_kvstore_v1_kvstore_proto_depIdxs,
+		MessageInfos:      file_kvstore_v1_kvstore_proto_msgTypes,
 	}.Build()
-	File_consensus_v1_consensus_proto = out.File
-	file_consensus_v1_consensus_proto_goTypes = nil
-	file_consensus_v1_consensus_proto_depIdxs = nil
+	File_kvstore_v1_kvstore_proto = out.File
+	file_kvstore_v1_kvstore_proto_goTypes = nil
+	file_kvstore_v1_kvstore_proto_depIdxs = nil
 }

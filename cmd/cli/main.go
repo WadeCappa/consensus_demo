@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	consensuspb "github.com/WadeCappa/consensus/pkg/go/consensus/v1"
+	"github.com/WadeCappa/consensus/pkg/go/kvstore/v1"
 	"github.com/alecthomas/kong"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -25,15 +25,15 @@ type Conn struct {
 }
 
 type Get struct {
-	Key string `arg:"" name:"key" help:"Key to retreive" type:"string"`
 	Conn
+	Key string `arg:"" name:"key" help:"Key to retreive" type:"string"`
 }
 
 type Put struct {
+	Conn
 	Key     string `arg:"" name:"key" help:"Key to retreive" type:"string"`
 	Version uint64 `arg:"" name:"version" help:"Version of element to put" type:"uint64"`
 	Data    string `arg:"" name:"data" help:"The data to put into the key-value store"`
-	Conn
 }
 
 var cli struct {
@@ -49,8 +49,8 @@ func main() {
 
 func (cmd *Get) Run() error {
 	ctx := context.Background()
-	return withClient(cmd.Conn.Hostname, cmd.Conn.Secure, func(client consensuspb.ConsensusClient) error {
-		response, err := client.Get(ctx, &consensuspb.GetRequest{
+	return withKvClient(cmd.Conn.Hostname, cmd.Conn.Secure, func(client kvstorepb.KvstoreClient) error {
+		response, err := client.Get(ctx, &kvstorepb.GetRequest{
 			Key: cmd.Key,
 		})
 		if err != nil {
@@ -71,8 +71,8 @@ func (cmd *Get) Run() error {
 
 func (cmd *Put) Run() error {
 	ctx := context.Background()
-	return withClient(cmd.Conn.Hostname, cmd.Conn.Secure, func(client consensuspb.ConsensusClient) error {
-		response, err := client.Put(ctx, &consensuspb.PutRequest{
+	return withKvClient(cmd.Conn.Hostname, cmd.Conn.Secure, func(client kvstorepb.KvstoreClient) error {
+		response, err := client.Put(ctx, &kvstorepb.PutRequest{
 			Key:     cmd.Key,
 			Version: cmd.Version,
 			Data:    []byte(cmd.Data),
@@ -85,21 +85,25 @@ func (cmd *Put) Run() error {
 	})
 }
 
-func withClient(
-	hostname string,
-	secure bool,
-	consumer func(client consensuspb.ConsensusClient) error,
-) error {
+func getGrpcClient(hostname string, secure bool) (*grpc.ClientConn, error) {
 	var creds credentials.TransportCredentials
 	if secure {
 		creds = credentials.NewTLS(&tls.Config{})
 	} else {
 		creds = insecure.NewCredentials()
 	}
-	conn, err := grpc.NewClient(hostname, grpc.WithTransportCredentials(creds))
+	return grpc.NewClient(hostname, grpc.WithTransportCredentials(creds))
+}
+
+func withKvClient(
+	hostname string,
+	secure bool,
+	consumer func(client kvstorepb.KvstoreClient) error,
+) error {
+	conn, err := getGrpcClient(hostname, secure)
 	if err != nil {
 		return fmt.Errorf("connecting to grpc server: %w", err)
 	}
 	defer conn.Close()
-	return consumer(consensuspb.NewConsensusClient(conn))
+	return consumer(kvstorepb.NewKvstoreClient(conn))
 }

@@ -1,9 +1,9 @@
 syntax = "proto3";
-option go_package = "github.com/WadeCappa/consensus/pkg/go/consensus/v1;consensuspb";
+option go_package = "github.com/WadeCappa/consensus/pkg/go/kvstore/v1;kvstorepb";
 
-package consensus;
+package kvstore;
 
-service Consensus {
+service kvstore {
   rpc Put (PutRequest) returns (PutResponse) {}
   rpc Get (GetRequest) returns (GetResponse) {}
 }

@@ -1,0 +1,29 @@
+syntax = "proto3";
+option go_package = "github.com/WadeCappa/consensus/gen/go/clocks/v1;clockspb";
+
+package clocks;
+
+service clocks {
+  rpc Publish (stream PublishRequest) returns (PublishResponse) {}
+  rpc Ack (AckRequest) returns (stream AckResponse) {}
+}
+
+message PublishRequest {
+  VectorClock clock = 1;
+  string key = 2;
+  bytes data = 3;
+}
+
+message PublishResponse {}
+
+message AckRequest {}
+
+message AckResponse {
+  VectorClock clock = 1;
+  string key = 2;
+}
+
+message VectorClock {
+  map<uint64, uint64> clock = 1;
+}
+

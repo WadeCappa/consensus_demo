@@ -1,17 +1,17 @@
 package db
 
-type Record struct {
+type DataVersion struct {
 	Version uint64
 	Data    []byte
 }
 
-func NewRecord(version uint64, data []byte) *Record {
-	return &Record{
+func NewDataVersion(version uint64, data []byte) *DataVersion {
+	return &DataVersion{
 		Version: version,
 		Data:    data,
 	}
 }
 
-func (r *Record) Bump() *Record {
-	return NewRecord(r.Version+1, r.Data)
+func (r *DataVersion) Bump() *DataVersion {
+	return NewDataVersion(r.Version+1, r.Data)
 }
