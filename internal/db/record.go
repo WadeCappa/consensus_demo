@@ -81,7 +81,7 @@ func (r *Record) Merge(remoteClock *Clock, chunks []*Chunk) error {
 	switch orderVal {
 	case Before:
 		r.Clock = remoteClock
-		r.Chunks = append(r.Chunks, chunks...)
+		r.Chunks = append(r.Chunks, chunks[len(r.Chunks):]...)
 		return nil
 	case After, Equal:
 		// do nothing
