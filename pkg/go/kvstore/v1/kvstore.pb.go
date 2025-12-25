@@ -23,9 +23,8 @@ const (
 
 type PutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Version       uint64                 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
-	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Update        []byte                 `protobuf:"bytes,2,opt,name=update,proto3" json:"update,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -60,13 +59,6 @@ func (*PutRequest) Descriptor() ([]byte, []int) {
 	return file_kvstore_v1_kvstore_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PutRequest) GetVersion() uint64 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
 func (x *PutRequest) GetKey() string {
 	if x != nil {
 		return x.Key
@@ -74,9 +66,9 @@ func (x *PutRequest) GetKey() string {
 	return ""
 }
 
-func (x *PutRequest) GetData() []byte {
+func (x *PutRequest) GetUpdate() []byte {
 	if x != nil {
-		return x.Data
+		return x.Update
 	}
 	return nil
 }
@@ -162,11 +154,13 @@ func (x *GetRequest) GetKey() string {
 }
 
 type GetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Version       uint64                 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
-	Data          []byte                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Data                []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	NodeId              uint64                 `protobuf:"varint,2,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Version             uint64                 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	WriteTimeUnixMillis uint64                 `protobuf:"varint,4,opt,name=writeTimeUnixMillis,proto3" json:"writeTimeUnixMillis,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *GetResponse) Reset() {
@@ -199,13 +193,6 @@ func (*GetResponse) Descriptor() ([]byte, []int) {
 	return file_kvstore_v1_kvstore_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetResponse) GetVersion() uint64 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
 func (x *GetResponse) GetData() []byte {
 	if x != nil {
 		return x.Data
@@ -213,26 +200,48 @@ func (x *GetResponse) GetData() []byte {
 	return nil
 }
 
+func (x *GetResponse) GetNodeId() uint64 {
+	if x != nil {
+		return x.NodeId
+	}
+	return 0
+}
+
+func (x *GetResponse) GetVersion() uint64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *GetResponse) GetWriteTimeUnixMillis() uint64 {
+	if x != nil {
+		return x.WriteTimeUnixMillis
+	}
+	return 0
+}
+
 var File_kvstore_v1_kvstore_proto protoreflect.FileDescriptor
 
 const file_kvstore_v1_kvstore_proto_rawDesc = "" +
 	"\n" +
-	"\x18kvstore/v1/kvstore.proto\x12\akvstore\"L\n" +
+	"\x18kvstore/v1/kvstore.proto\x12\akvstore\"6\n" +
 	"\n" +
-	"PutRequest\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\x12\x12\n" +
-	"\x04data\x18\x03 \x01(\fR\x04data\"\r\n" +
+	"PutRequest\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
+	"\x06update\x18\x02 \x01(\fR\x06update\"\r\n" +
 	"\vPutResponse\"\x1e\n" +
 	"\n" +
 	"GetRequest\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\";\n" +
-	"\vGetResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\fR\x04data2q\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"\x85\x01\n" +
+	"\vGetResponse\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\x12\x16\n" +
+	"\x06nodeId\x18\x02 \x01(\x04R\x06nodeId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x04R\aversion\x120\n" +
+	"\x13writeTimeUnixMillis\x18\x04 \x01(\x04R\x13writeTimeUnixMillis2s\n" +
 	"\akvstore\x122\n" +
-	"\x03Put\x12\x13.kvstore.PutRequest\x1a\x14.kvstore.PutResponse\"\x00\x122\n" +
-	"\x03Get\x12\x13.kvstore.GetRequest\x1a\x14.kvstore.GetResponse\"\x00B<Z:github.com/WadeCappa/consensus/pkg/go/kvstore/v1;kvstorepbb\x06proto3"
+	"\x03Put\x12\x13.kvstore.PutRequest\x1a\x14.kvstore.PutResponse\"\x00\x124\n" +
+	"\x03Get\x12\x13.kvstore.GetRequest\x1a\x14.kvstore.GetResponse\"\x000\x01B<Z:github.com/WadeCappa/consensus/pkg/go/kvstore/v1;kvstorepbb\x06proto3"
 
 var (
 	file_kvstore_v1_kvstore_proto_rawDescOnce sync.Once

@@ -80,12 +80,8 @@ func Order(a, b *Clock) Ordering {
 	return Equal
 }
 
-func (c *Clock) getVersion() uint64 {
-	t := uint64(0)
-	for _, v := range c.clock {
-		t += v
-	}
-	return t
+func (c *Clock) getVersion(nodeId uint64) uint64 {
+	return c.clock[nodeId]
 }
 
 func (c *Clock) set(id, newVersion uint64) {

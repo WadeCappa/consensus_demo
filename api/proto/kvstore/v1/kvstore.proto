@@ -5,13 +5,12 @@ package kvstore;
 
 service kvstore {
   rpc Put (PutRequest) returns (PutResponse) {}
-  rpc Get (GetRequest) returns (GetResponse) {}
+  rpc Get (GetRequest) returns (stream GetResponse) {}
 }
 
 message PutRequest {
-  uint64 version = 1;
-  string key = 2;
-  bytes data = 3;
+  string key = 1;
+  bytes update = 2;
 }
 
 message PutResponse {}
@@ -21,6 +20,8 @@ message GetRequest {
 }
 
 message GetResponse {
-  uint64 version = 1;
-  bytes data = 2;
+  bytes data = 1;
+  uint64 nodeId = 2;
+  uint64 version = 3;
+  uint64 writeTimeUnixMillis = 4;
 }

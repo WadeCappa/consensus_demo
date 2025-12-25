@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Database struct {
@@ -19,31 +20,28 @@ func NewDatabase(localId uint64) *Database {
 	}
 }
 
-func (d *Database) Get(key string) (*DataVersion, bool) {
+func (d *Database) Get(key string) (*Record, bool) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	result, exists := d.data[key]
 	if !exists {
 		return nil, false
 	}
-	return result.toDataVersion(), true
+	return result, true
 }
 
-func (d *Database) Put(key string, data *DataVersion) error {
+func (d *Database) Put(key string, update []byte, updateTime time.Time) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	prev, exists := d.data[key]
 	if !exists {
-		d.data[key] = newRecord(data.Data, newClock(d.localId, data.Version+1))
+		clock := newClock(d.localId, 1)
+		chunk := NewChunk(d.localId, 1, updateTime, update)
+		d.data[key] = FromChunk(clock, chunk)
 		return nil
 	}
 
-	currentVersion := prev.Clock.getVersion()
-	if currentVersion != data.Version {
-		return fmt.Errorf("version of %d did not match expected version of %d", data.Version, currentVersion)
-	}
-
-	prev.update(d.localId, currentVersion+1, data.Data)
+	prev.Update(d.localId, prev.GetVersion(d.localId)+1, updateTime, update)
 	return nil
 }
 
@@ -58,16 +56,16 @@ func (d *Database) Range(consumer func(key string, record *Record) error) error 
 	return nil
 }
 
-func (d *Database) Merge(key string, data []byte, remoteClock *Clock) error {
+func (d *Database) Merge(key string, remoteClock *Clock, chunks []*Chunk) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	record, exists := d.data[key]
 	if !exists {
-		d.data[key] = newRecord(data, remoteClock)
+		d.data[key] = NewRecord(remoteClock, chunks)
 		return nil
 	}
 
-	if err := record.Merge(data, remoteClock); err != nil {
+	if err := record.Merge(remoteClock, chunks); err != nil {
 		return fmt.Errorf("merging remote data with local data: %w", err)
 	}
 	return nil

@@ -25,7 +25,7 @@ type PublishRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Clock         *VectorClock           `protobuf:"bytes,1,opt,name=clock,proto3" json:"clock,omitempty"`
 	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Chunks        []*Chunk               `protobuf:"bytes,3,rep,name=chunks,proto3" json:"chunks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,9 +74,9 @@ func (x *PublishRequest) GetKey() string {
 	return ""
 }
 
-func (x *PublishRequest) GetData() []byte {
+func (x *PublishRequest) GetChunks() []*Chunk {
 	if x != nil {
-		return x.Data
+		return x.Chunks
 	}
 	return nil
 }
@@ -249,15 +249,83 @@ func (x *VectorClock) GetClock() map[uint64]uint64 {
 	return nil
 }
 
+type Chunk struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Data                []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	NodeId              uint64                 `protobuf:"varint,2,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Version             uint64                 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	WriteTimeUnixMillis uint64                 `protobuf:"varint,4,opt,name=writeTimeUnixMillis,proto3" json:"writeTimeUnixMillis,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *Chunk) Reset() {
+	*x = Chunk{}
+	mi := &file_clocks_v1_clocks_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Chunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Chunk) ProtoMessage() {}
+
+func (x *Chunk) ProtoReflect() protoreflect.Message {
+	mi := &file_clocks_v1_clocks_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Chunk.ProtoReflect.Descriptor instead.
+func (*Chunk) Descriptor() ([]byte, []int) {
+	return file_clocks_v1_clocks_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Chunk) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *Chunk) GetNodeId() uint64 {
+	if x != nil {
+		return x.NodeId
+	}
+	return 0
+}
+
+func (x *Chunk) GetVersion() uint64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Chunk) GetWriteTimeUnixMillis() uint64 {
+	if x != nil {
+		return x.WriteTimeUnixMillis
+	}
+	return 0
+}
+
 var File_clocks_v1_clocks_proto protoreflect.FileDescriptor
 
 const file_clocks_v1_clocks_proto_rawDesc = "" +
 	"\n" +
-	"\x16clocks/v1/clocks.proto\x12\x06clocks\"a\n" +
+	"\x16clocks/v1/clocks.proto\x12\x06clocks\"t\n" +
 	"\x0ePublishRequest\x12)\n" +
 	"\x05clock\x18\x01 \x01(\v2\x13.clocks.VectorClockR\x05clock\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\x12\x12\n" +
-	"\x04data\x18\x03 \x01(\fR\x04data\"\x11\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12%\n" +
+	"\x06chunks\x18\x03 \x03(\v2\r.clocks.ChunkR\x06chunks\"\x11\n" +
 	"\x0fPublishResponse\"\f\n" +
 	"\n" +
 	"AckRequest\"J\n" +
@@ -269,7 +337,12 @@ const file_clocks_v1_clocks_proto_rawDesc = "" +
 	"\n" +
 	"ClockEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\x04R\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x012|\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\x7f\n" +
+	"\x05Chunk\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\x12\x16\n" +
+	"\x06nodeId\x18\x02 \x01(\x04R\x06nodeId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x04R\aversion\x120\n" +
+	"\x13writeTimeUnixMillis\x18\x04 \x01(\x04R\x13writeTimeUnixMillis2|\n" +
 	"\x06clocks\x12>\n" +
 	"\aPublish\x12\x16.clocks.PublishRequest\x1a\x17.clocks.PublishResponse\"\x00(\x01\x122\n" +
 	"\x03Ack\x12\x12.clocks.AckRequest\x1a\x13.clocks.AckResponse\"\x000\x01B:Z8github.com/WadeCappa/consensus/gen/go/clocks/v1;clockspbb\x06proto3"
@@ -286,28 +359,30 @@ func file_clocks_v1_clocks_proto_rawDescGZIP() []byte {
 	return file_clocks_v1_clocks_proto_rawDescData
 }
 
-var file_clocks_v1_clocks_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_clocks_v1_clocks_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_clocks_v1_clocks_proto_goTypes = []any{
 	(*PublishRequest)(nil),  // 0: clocks.PublishRequest
 	(*PublishResponse)(nil), // 1: clocks.PublishResponse
 	(*AckRequest)(nil),      // 2: clocks.AckRequest
 	(*AckResponse)(nil),     // 3: clocks.AckResponse
 	(*VectorClock)(nil),     // 4: clocks.VectorClock
-	nil,                     // 5: clocks.VectorClock.ClockEntry
+	(*Chunk)(nil),           // 5: clocks.Chunk
+	nil,                     // 6: clocks.VectorClock.ClockEntry
 }
 var file_clocks_v1_clocks_proto_depIdxs = []int32{
 	4, // 0: clocks.PublishRequest.clock:type_name -> clocks.VectorClock
-	4, // 1: clocks.AckResponse.clock:type_name -> clocks.VectorClock
-	5, // 2: clocks.VectorClock.clock:type_name -> clocks.VectorClock.ClockEntry
-	0, // 3: clocks.clocks.Publish:input_type -> clocks.PublishRequest
-	2, // 4: clocks.clocks.Ack:input_type -> clocks.AckRequest
-	1, // 5: clocks.clocks.Publish:output_type -> clocks.PublishResponse
-	3, // 6: clocks.clocks.Ack:output_type -> clocks.AckResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	5, // 1: clocks.PublishRequest.chunks:type_name -> clocks.Chunk
+	4, // 2: clocks.AckResponse.clock:type_name -> clocks.VectorClock
+	6, // 3: clocks.VectorClock.clock:type_name -> clocks.VectorClock.ClockEntry
+	0, // 4: clocks.clocks.Publish:input_type -> clocks.PublishRequest
+	2, // 5: clocks.clocks.Ack:input_type -> clocks.AckRequest
+	1, // 6: clocks.clocks.Publish:output_type -> clocks.PublishResponse
+	3, // 7: clocks.clocks.Ack:output_type -> clocks.AckResponse
+	6, // [6:8] is the sub-list for method output_type
+	4, // [4:6] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_clocks_v1_clocks_proto_init() }
@@ -321,7 +396,7 @@ func file_clocks_v1_clocks_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_clocks_v1_clocks_proto_rawDesc), len(file_clocks_v1_clocks_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

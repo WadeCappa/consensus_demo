@@ -108,9 +108,9 @@ func (s *ClockClient) sendData(ctx context.Context, client clockspb.ClocksClient
 
 		if err := s.data.Range(func(key string, record *db.Record) error {
 			if err := stream.Send(&clockspb.PublishRequest{
-				Key:   key,
-				Data:  record.Data,
-				Clock: record.Clock.ToWireType(),
+				Key:    key,
+				Chunks: db.ChunksToWireType(record.Chunks),
+				Clock:  record.Clock.ToWireType(),
 			}); err != nil {
 				return fmt.Errorf("publishing next clock: %w", err)
 			}

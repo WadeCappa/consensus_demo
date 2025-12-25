@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KvstoreClient interface {
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetResponse], error)
 }
 
 type kvstoreClient struct {
@@ -49,22 +49,31 @@ func (c *kvstoreClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *kvstoreClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+func (c *kvstoreClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, Kvstore_Get_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &Kvstore_ServiceDesc.Streams[0], Kvstore_Get_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[GetRequest, GetResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Kvstore_GetClient = grpc.ServerStreamingClient[GetResponse]
 
 // KvstoreServer is the server API for Kvstore service.
 // All implementations must embed UnimplementedKvstoreServer
 // for forward compatibility.
 type KvstoreServer interface {
 	Put(context.Context, *PutRequest) (*PutResponse, error)
-	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Get(*GetRequest, grpc.ServerStreamingServer[GetResponse]) error
 	mustEmbedUnimplementedKvstoreServer()
 }
 
@@ -78,8 +87,8 @@ type UnimplementedKvstoreServer struct{}
 func (UnimplementedKvstoreServer) Put(context.Context, *PutRequest) (*PutResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Put not implemented")
 }
-func (UnimplementedKvstoreServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedKvstoreServer) Get(*GetRequest, grpc.ServerStreamingServer[GetResponse]) error {
+	return status.Error(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedKvstoreServer) mustEmbedUnimplementedKvstoreServer() {}
 func (UnimplementedKvstoreServer) testEmbeddedByValue()                 {}
@@ -120,23 +129,16 @@ func _Kvstore_Put_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Kvstore_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _Kvstore_Get_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(KvstoreServer).Get(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Kvstore_Get_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KvstoreServer).Get(ctx, req.(*GetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(KvstoreServer).Get(m, &grpc.GenericServerStream[GetRequest, GetResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Kvstore_GetServer = grpc.ServerStreamingServer[GetResponse]
 
 // Kvstore_ServiceDesc is the grpc.ServiceDesc for Kvstore service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -149,11 +151,13 @@ var Kvstore_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Put",
 			Handler:    _Kvstore_Put_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Kvstore_Get_Handler,
+			StreamName:    "Get",
+			Handler:       _Kvstore_Get_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "kvstore/v1/kvstore.proto",
 }

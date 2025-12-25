@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/WadeCappa/consensus/pkg/go/kvstore/v1"
 	"github.com/alecthomas/kong"
@@ -15,8 +17,10 @@ import (
 )
 
 type result struct {
-	Version uint64 `json:"version"`
-	Data    string `json:"data"`
+	Version   uint64    `json:"version"`
+	Data      string    `json:"data"`
+	NodeId    uint64    `json:"nodeId"`
+	WriteTime time.Time `json:"writeTime"`
 }
 
 type Conn struct {
@@ -32,7 +36,6 @@ type Get struct {
 type Put struct {
 	Conn
 	Key     string `arg:"" name:"key" help:"Key to retreive" type:"string"`
-	Version uint64 `arg:"" name:"version" help:"Version of element to put" type:"uint64"`
 	Data    string `arg:"" name:"data" help:"The data to put into the key-value store"`
 }
 
@@ -56,15 +59,26 @@ func (cmd *Get) Run() error {
 		if err != nil {
 			return err
 		}
-		result := &result{
-			Version: response.Version,
-			Data:    string(response.Data),
+		for {
+			response, err := response.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("getting next response: %w", err)
+			}
+			result := &result{
+				Data:      string(response.Data),
+				WriteTime: time.UnixMilli(int64(response.WriteTimeUnixMillis)),
+				Version:   response.Version,
+				NodeId:    response.NodeId,
+			}
+			stringResults, err := json.Marshal(result)
+			if err != nil {
+				return fmt.Errorf("marshaling response json: %w", err)
+			}
+			fmt.Println(string(stringResults))
 		}
-		stringResults, err := json.Marshal(result)
-		if err != nil {
-			return fmt.Errorf("marshaling result string: %w", err)
-		}
-		fmt.Println(string(stringResults))
 		return nil
 	})
 }
@@ -73,9 +87,8 @@ func (cmd *Put) Run() error {
 	ctx := context.Background()
 	return withKvClient(cmd.Conn.Hostname, cmd.Conn.Secure, func(client kvstorepb.KvstoreClient) error {
 		response, err := client.Put(ctx, &kvstorepb.PutRequest{
-			Key:     cmd.Key,
-			Version: cmd.Version,
-			Data:    []byte(cmd.Data),
+			Key:    cmd.Key,
+			Update: []byte(cmd.Data),
 		})
 		if err != nil {
 			return err

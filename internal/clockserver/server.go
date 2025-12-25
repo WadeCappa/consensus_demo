@@ -36,7 +36,7 @@ func (s *clockServer) Publish(
 		if err != nil {
 			return fmt.Errorf("receiving next publish request: %w", err)
 		}
-		if err := s.data.Merge(request.Key, request.Data, db.FromWireType(request.Clock)); err != nil {
+		if err := s.data.Merge(request.Key, db.FromWireType(request.Clock), db.ChunksFromWireType(request.Chunks)); err != nil {
 			return fmt.Errorf("merging clocks: %w", err)
 		}
 	}

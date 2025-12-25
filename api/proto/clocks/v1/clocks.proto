@@ -11,7 +11,7 @@ service clocks {
 message PublishRequest {
   VectorClock clock = 1;
   string key = 2;
-  bytes data = 3;
+  repeated Chunk chunks = 3;
 }
 
 message PublishResponse {}
@@ -27,3 +27,9 @@ message VectorClock {
   map<uint64, uint64> clock = 1;
 }
 
+message Chunk {
+  bytes data = 1;
+  uint64 nodeId = 2;
+  uint64 version = 3;
+  uint64 writeTimeUnixMillis = 4;
+}
