@@ -81,7 +81,7 @@ func (r *Record) Merge(remoteClock *Clock, chunks []*Chunk) error {
 	switch orderVal {
 	case Before:
 		r.Clock = remoteClock
-		r.Chunks = append(r.Chunks, chunks[len(r.Chunks):]...)
+		r.Chunks = append(r.Chunks, chunks...)
 		return nil
 	case After, Equal:
 		// do nothing
@@ -108,6 +108,16 @@ func (r *Record) Update(nodeId, version uint64, updateTime time.Time, data []byt
 
 func (c *Chunk) Visit(f func(writeTime time.Time, nodeId uint64, version uint64, data []byte)) {
 	f(c.writeTime, c.nodeId, c.version, c.data)
+}
+
+func (r *Record) GetChunksSince(alreadySeenData *Clock) []*Chunk {
+	var result []*Chunk
+	for _, c := range r.Chunks {
+		if c.version > alreadySeenData.getVersion(c.nodeId) {
+			result = append(result, c)
+		}
+	}
+	return result
 }
 
 func asTime(millis uint64) time.Time {

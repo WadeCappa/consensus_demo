@@ -2,106 +2,91 @@ package db_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/WadeCappa/consensus/internal/db"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMerging(t *testing.T) {
-	tests := []struct {
-		name     string
-		old      *db.Record
-		new      *db.Record
-		expected *db.Record
-	}{
-		{
-			name: "merge_value_into_empty",
-			old: &db.Record{
-				Data: []byte("old-value"),
-				Clock: db.From(
-					map[uint64]uint64{},
-				),
-			},
-			new: &db.Record{
-				Data: []byte("new-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-					},
-				),
-			},
-			expected: &db.Record{
-				Data: []byte("new-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-					},
-				),
-			},
-		},
-		{
-			name: "merge_equal_records",
-			old: &db.Record{
-				Data: []byte("old-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-					},
-				),
-			},
-			new: &db.Record{
-				Data: []byte("new-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-					},
-				),
-			},
-			expected: &db.Record{
-				Data: []byte("old-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-					},
-				),
-			},
-		},
-		{
-			name: "reject_merge_of_outdated_data",
-			old: &db.Record{
-				Data: []byte("old-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-						1: 1,
-					},
-				),
-			},
-			new: &db.Record{
-				Data: []byte("new-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-					},
-				),
-			},
-			expected: &db.Record{
-				Data: []byte("old-value"),
-				Clock: db.From(
-					map[uint64]uint64{
-						0: 1,
-						1: 1,
-					},
-				),
-			},
-		},
+var (
+	testNodeId = uint64(101)
+)
+
+func TestAcceptNewChunksIntoEmptyRecord(t *testing.T) {
+	old := db.NewRecord(db.EmptyClock(), []*db.Chunk{})
+	newChunks := []*db.Chunk{
+		db.NewChunk(testNodeId, 1, time.Now(), []byte("test-data")),
+	}
+	newClock := db.From(map[uint64]uint64{
+		testNodeId: 1,
+	})
+	require.NoError(t, old.Merge(newClock, newChunks))
+	require.Equal(t, newChunks, old.Chunks)
+	require.Equal(t, db.Equal, db.Order(old.Clock, newClock))
+	require.Equal(t, newClock.ToWireType(), old.Clock.ToWireType())
+}
+
+func TestMergeEqualEntries(t *testing.T) {
+	c := db.From(map[uint64]uint64{
+		testNodeId: 1,
+	})
+	chunks := []*db.Chunk{
+		db.NewChunk(testNodeId, 1, time.Now(), []byte("test-data")),
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			require.NoError(t, test.old.Merge(test.new.Data, test.new.Clock))
-			require.Equal(t, test.expected.Data, test.old.Data)
-			require.Equal(t, db.Equal, db.Order(test.old.Clock, test.expected.Clock))
-		})
+	current := db.NewRecord(c, chunks)
+
+	// Don't merge the same chunk. Since the vector clocks are equal we should drop this new
+	// data without affecting the current record.
+	require.NoError(t, current.Merge(c, []*db.Chunk{
+		db.NewChunk(testNodeId, 1, time.Now(), []byte("different-data")),
+	}))
+
+	require.Equal(t, chunks, current.Chunks)
+	require.Equal(t, db.Equal, db.Order(current.Clock, c))
+	require.Equal(t, c.ToWireType(), current.Clock.ToWireType())
+}
+
+func TestRejectOutdataData(t *testing.T) {
+	c := db.From(map[uint64]uint64{
+		testNodeId: 1,
+	})
+	chunks := []*db.Chunk{
+		db.NewChunk(testNodeId, 1, time.Now(), []byte("test-data")),
 	}
+
+	current := db.NewRecord(c, chunks)
+
+	// Don't merge the same chunk. Since this new data is behind, we shouldn't merge.
+	require.NoError(t, current.Merge(db.EmptyClock(), []*db.Chunk{
+		db.NewChunk(testNodeId, 1, time.Now(), []byte("different-data")),
+	}))
+
+	require.Equal(t, chunks, current.Chunks)
+	require.Equal(t, db.Equal, db.Order(current.Clock, c))
+	require.Equal(t, c.ToWireType(), current.Clock.ToWireType())
+}
+
+func TestMergingNewDataFromSameNode(t *testing.T) {
+	startingClock := db.From(map[uint64]uint64{
+		testNodeId: 1,
+	})
+	chunks := []*db.Chunk{
+		db.NewChunk(testNodeId, 1, time.Now(), []byte("test-data")),
+	}
+
+	current := db.NewRecord(startingClock, chunks)
+
+	newChunks := []*db.Chunk{
+		db.NewChunk(testNodeId, 2, time.Now(), []byte("more-data")),
+	}
+
+	newClock := db.From(map[uint64]uint64{
+		testNodeId: 2,
+	})
+	require.NoError(t, current.Merge(newClock, newChunks))
+
+	require.Equal(t, current.Chunks, []*db.Chunk{chunks[0], newChunks[0]})
+	require.Equal(t, db.Equal, db.Order(current.Clock, newClock))
+	require.Equal(t, newClock.ToWireType(), current.Clock.ToWireType())
 }

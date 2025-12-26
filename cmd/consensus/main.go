@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/WadeCappa/consensus/gen/go/clocks/v1"
 	"github.com/WadeCappa/consensus/internal/clocksclient"
@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	port   = flag.Int("port", 3100, "The server port")
-	secure = flag.Bool("secure", false, "Set this flag if we connect to remote servers with TLS")
-	servers  []string
+	port    = flag.Int("port", 3100, "The server port")
+	secure  = flag.Bool("secure", false, "Set this flag if we connect to remote servers with TLS")
+	servers []string
 )
 
 func main() {
@@ -38,8 +38,7 @@ func main() {
 
 	fmt.Printf("listening to %s\n", servers)
 
-	serverId := rand.Uint64()
-	db := db.NewDatabase(serverId)
+	db := db.NewDatabase(uint64(*port))
 
 	kvServer := kvserver.NewKvServer(db)
 	kvstorepb.RegisterKvstoreServer(s, kvServer)
@@ -47,7 +46,7 @@ func main() {
 	clockServer := clockserver.NewClockServer(db)
 	clockspb.RegisterClocksServer(s, clockServer)
 
-	client := clocksclient.NewClocksClient(db, *secure)
+	client := clocksclient.NewClocksClient(db, *secure, time.Second*10)
 	for _, server := range servers {
 		go client.RunAcksWithRetry(context.Background(), server)
 		go client.SendDataWithRetry(context.Background(), server)

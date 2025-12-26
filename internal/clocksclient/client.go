@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/WadeCappa/consensus/gen/go/clocks/v1"
@@ -12,23 +14,27 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type ClockClient struct {
-	data   *db.Database
-	secure bool
+	data         *db.Database
+	secure       bool
+	remoteClocks *db.RemoteClocks
+	delay        time.Duration
 }
 
-func NewClocksClient(db *db.Database, secure bool) *ClockClient {
+func NewClocksClient(data *db.Database, secure bool, delay time.Duration) *ClockClient {
 	return &ClockClient{
-		data:   db,
-		secure: secure,
+		data:         data,
+		secure:       secure,
+		remoteClocks: db.NewRemoteClocks(),
+		delay:        delay,
 	}
 }
 
 func (s *ClockClient) SendDataWithRetry(ctx context.Context, hostname string) {
-	backoffTicker := time.NewTicker(time.Second)
+	remoteSystemId := getRemoteSystemId(hostname)
+	backoffTicker := time.NewTicker(s.delay)
 	defer backoffTicker.Stop()
 	for {
 		select {
@@ -38,7 +44,7 @@ func (s *ClockClient) SendDataWithRetry(ctx context.Context, hostname string) {
 		}
 		fmt.Printf("starting send stream for server %s\n", hostname)
 		if err := withConnection(hostname, s.secure, func(client clockspb.ClocksClient) error {
-			return s.sendData(ctx, client)
+			return s.sendData(ctx, client, remoteSystemId)
 		}); err != nil {
 			fmt.Printf("Failed to stream data: %s\n", err.Error())
 		}
@@ -46,7 +52,8 @@ func (s *ClockClient) SendDataWithRetry(ctx context.Context, hostname string) {
 }
 
 func (s *ClockClient) RunAcksWithRetry(ctx context.Context, hostname string) {
-	backoffTicker := time.NewTicker(time.Second)
+	remoteSystemId := getRemoteSystemId(hostname)
+	backoffTicker := time.NewTicker(s.delay)
 	defer backoffTicker.Stop()
 	for {
 		select {
@@ -56,15 +63,19 @@ func (s *ClockClient) RunAcksWithRetry(ctx context.Context, hostname string) {
 		}
 		fmt.Printf("starting ack stream for server %s\n", hostname)
 		if err := withConnection(hostname, s.secure, func(client clockspb.ClocksClient) error {
-			return s.sendAcks(ctx, client)
+			return s.getAcks(ctx, client, remoteSystemId)
 		}); err != nil {
 			fmt.Printf("Failed to stream acks: %s\n", err.Error())
 		}
 	}
 }
 
-func (s *ClockClient) sendAcks(ctx context.Context, client clockspb.ClocksClient) error {
-	ticker := time.NewTicker(time.Second)
+func (s *ClockClient) getAcks(
+	ctx context.Context,
+	client clockspb.ClocksClient,
+	remoteSystemId uint64,
+) error {
+	ticker := time.NewTicker(s.delay)
 	defer ticker.Stop()
 	for {
 		select {
@@ -86,14 +97,17 @@ func (s *ClockClient) sendAcks(ctx context.Context, client clockspb.ClocksClient
 			if err != nil {
 				return fmt.Errorf("receiving ack: %w", err)
 			}
-			// Just print for now, no logic to process these just yet
-			fmt.Println(protojson.Format(ack))
+			s.remoteClocks.Accept(remoteSystemId, ack.GetKey(), db.FromWireType(ack.GetClock()))
 		}
 	}
 }
 
-func (s *ClockClient) sendData(ctx context.Context, client clockspb.ClocksClient) error {
-	ticker := time.NewTicker(time.Second)
+func (s *ClockClient) sendData(
+	ctx context.Context,
+	client clockspb.ClocksClient,
+	remoteSystemId uint64,
+) error {
+	ticker := time.NewTicker(s.delay)
 	defer ticker.Stop()
 	for {
 		select {
@@ -107,22 +121,32 @@ func (s *ClockClient) sendData(ctx context.Context, client clockspb.ClocksClient
 		}
 
 		if err := s.data.Range(func(key string, record *db.Record) error {
-			if err := stream.Send(&clockspb.PublishRequest{
+			remoteClock := s.remoteClocks.Get(remoteSystemId, key)
+			var chunksSince []*db.Chunk
+			if remoteClock == nil {
+				chunksSince = record.Chunks
+			} else {
+				chunksSince = record.GetChunksSince(remoteClock)
+			}
+			if len(chunksSince) == 0 {
+				return nil
+			}
+			msg := &clockspb.PublishRequest{
 				Key:    key,
-				Chunks: db.ChunksToWireType(record.Chunks),
+				Chunks: db.ChunksToWireType(chunksSince),
 				Clock:  record.Clock.ToWireType(),
-			}); err != nil {
+			}
+			if err := stream.Send(msg); err != nil {
 				return fmt.Errorf("publishing next clock: %w", err)
 			}
 			return nil
 		}); err != nil {
 			return fmt.Errorf("iterating over data: %w", err)
 		}
-		response, err := stream.CloseAndRecv()
+		_, err = stream.CloseAndRecv()
 		if err != nil {
 			return fmt.Errorf("receiving closing message: %w", err)
 		}
-		fmt.Println(protojson.Format(response))
 	}
 }
 
@@ -142,4 +166,14 @@ func withConnection(hostname string, secure bool, consumer func(clockspb.ClocksC
 		return fmt.Errorf("consuming client: %w", err)
 	}
 	return nil
+}
+
+func getRemoteSystemId(hostname string) uint64 {
+	hostnameParts := strings.Split(hostname, ":")
+	id, err := strconv.Atoi(hostnameParts[1])
+	if err != nil {
+		panic(err.Error())
+	}
+	remoteSystemId := uint64(id)
+	return remoteSystemId
 }

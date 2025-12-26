@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"maps"
 
 	clockspb "github.com/WadeCappa/consensus/gen/go/clocks/v1"
 )
@@ -19,6 +20,12 @@ const (
 
 type Clock struct {
 	clock map[uint64]uint64
+}
+
+func EmptyClock() *Clock {
+	return &Clock{
+		clock: map[uint64]uint64{},
+	}
 }
 
 func From(clock map[uint64]uint64) *Clock {
@@ -95,4 +102,15 @@ func (c *Clock) toString() string {
 	}
 
 	return string(jsonData)
+}
+
+func (c *Clock) Merge(remote *Clock) *Clock {
+	result := map[uint64]uint64{}
+	maps.Copy(result, c.clock)
+	for k, v := range remote.clock {
+		if existingVal, found := result[k]; !found || v > existingVal {
+			result[k] = v
+		}
+	}
+	return From(result)
 }
