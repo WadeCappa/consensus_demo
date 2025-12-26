@@ -46,7 +46,7 @@ func main() {
 	clockServer := clockserver.NewClockServer(db)
 	clockspb.RegisterClocksServer(s, clockServer)
 
-	client := clocksclient.NewClocksClient(db, *secure, time.Second*10)
+	client := clocksclient.NewClocksClient(db, *secure, time.Second*3)
 	for _, server := range servers {
 		go client.RunAcksWithRetry(context.Background(), server)
 		go client.SendDataWithRetry(context.Background(), server)

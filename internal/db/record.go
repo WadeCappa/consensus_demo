@@ -80,21 +80,24 @@ func (r *Record) Merge(remoteClock *Clock, chunks []*Chunk) error {
 	orderVal := Order(r.Clock, remoteClock)
 	switch orderVal {
 	case Before:
-		r.Clock = remoteClock
 		for _, c := range chunks {
 			alreadySeen := r.Clock.getVersion(c.nodeId)
 			if c.version <= alreadySeen {
-				fmt.Printf("encountered old chunk of version %d for node %d, but we have already seen %d", c.version, c.nodeId, alreadySeen)
+				fmt.Printf("encountered old chunk of version %d for node %d, but we have already seen %d\n", c.version, c.nodeId, alreadySeen)
 				continue
 			}
-			r.Chunks = append(r.Chunks, chunks...)
+			r.Chunks = append(r.Chunks, c)
 		}
+		r.Clock = remoteClock
 		return nil
 	case After, Equal:
-		// do nothing
+		fmt.Printf("encountered outdated clock of %s, where our clock is %s\n", remoteClock.toString(), r.Clock.toString())
 		return nil
 	case Concurrent:
-		return fmt.Errorf("cannot merge concurrent clocks: a) %s, b) %s", r.Clock.toString(), remoteClock.toString())
+		fmt.Printf("encountered concurrent clock of %s, where our clock is %s\n", remoteClock.toString(), r.Clock.toString())
+		r.Chunks = mergeChunks(r.Clock, r.Chunks, chunks)
+		r.Clock = r.Clock.Merge(remoteClock)
+		return nil
 	default:
 		return fmt.Errorf("unrecognized order value of %d", orderVal)
 	}
@@ -129,4 +132,35 @@ func (r *Record) GetChunksSince(alreadySeenData *Clock) []*Chunk {
 
 func asTime(millis uint64) time.Time {
 	return time.UnixMilli(int64(millis))
+}
+
+func mergeChunks(clock *Clock, a, b []*Chunk) []*Chunk {
+	var result []*Chunk
+	pa := 0
+	pb := 0
+	for {
+		if pa == len(a) || pb == len(b) {
+			break
+		}
+		if a[pa].writeTime.Before(b[pb].writeTime) {
+			result = append(result, a[pa])
+			pa += 1
+		} else {
+			c := b[pb]
+			if c.version > clock.getVersion(c.nodeId) {
+				result = append(result, c)
+			}
+			pb += 1
+		}
+	}
+	if pa == len(a) {
+		result = append(result, b[pb:]...)
+	} else if pb == len(b) {
+		for _, c := range a[pa:] {
+			if c.version > clock.getVersion(c.nodeId) {
+				result = append(result, c)
+			}
+		}
+	}
+	return result
 }
