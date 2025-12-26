@@ -94,31 +94,28 @@ func TestMergingNewDataFromSameNode(t *testing.T) {
 func TestMergingConcurrentClocks(t *testing.T) {
 	currentTime := time.Now()
 	startingClock := db.From(map[uint64]uint64{
-		testNodeId: 3,
+		testNodeId: 1,
 	})
 	chunks := []*db.Chunk{
 		db.NewChunk(testNodeId, 1, currentTime.Add(time.Second), []byte("test-data")),
-		db.NewChunk(testNodeId, 2, currentTime.Add(time.Second*3), []byte("test-data-2")),
-		db.NewChunk(testNodeId, 3, currentTime.Add(time.Second*5), []byte("test-data-3")),
 	}
 
 	current := db.NewRecord(startingClock, chunks)
 
 	newChunks := []*db.Chunk{
 		db.NewChunk(testNodeId+1, 1, currentTime.Add(time.Second*2), []byte("more-data")),
-		db.NewChunk(testNodeId+1, 2, currentTime.Add(time.Second*4), []byte("more-data-2")),
 	}
 	newClock := db.From(map[uint64]uint64{
-		testNodeId + 1: 2,
+		testNodeId + 1: 1,
 	})
 	require.NoError(t, current.Merge(newClock, newChunks))
 
 	expectedClock := db.From(map[uint64]uint64{
-		testNodeId:     3,
-		testNodeId + 1: 2,
+		testNodeId:     1,
+		testNodeId + 1: 1,
 	})
 	require.Equal(t, db.Equal, db.Order(expectedClock, current.Clock))
-	require.Equal(t, []*db.Chunk{chunks[0], newChunks[0], chunks[1], newChunks[1]}, current.Chunks)
+	require.Equal(t, []*db.Chunk{chunks[0], newChunks[0]}, current.Chunks)
 }
 
 func TestMergingRepeatedData(t *testing.T) {

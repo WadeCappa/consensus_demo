@@ -154,13 +154,13 @@ func mergeChunks(clock *Clock, a, b []*Chunk) []*Chunk {
 		}
 	}
 	if pa == len(a) {
-		result = append(result, b[pb:]...)
-	} else if pb == len(b) {
-		for _, c := range a[pa:] {
+		for _, c := range b[pb:] {
 			if c.version > clock.getVersion(c.nodeId) {
 				result = append(result, c)
 			}
 		}
+	} else if pb == len(b) {
+		result = append(result, a[pa:]...)
 	}
 	return result
 }
