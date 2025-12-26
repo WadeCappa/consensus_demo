@@ -81,7 +81,14 @@ func (r *Record) Merge(remoteClock *Clock, chunks []*Chunk) error {
 	switch orderVal {
 	case Before:
 		r.Clock = remoteClock
-		r.Chunks = append(r.Chunks, chunks...)
+		for _, c := range chunks {
+			alreadySeen := r.Clock.getVersion(c.nodeId)
+			if c.version <= alreadySeen {
+				fmt.Printf("encountered old chunk of version %d for node %d, but we have already seen %d", c.version, c.nodeId, alreadySeen)
+				continue
+			}
+			r.Chunks = append(r.Chunks, chunks...)
+		}
 		return nil
 	case After, Equal:
 		// do nothing
