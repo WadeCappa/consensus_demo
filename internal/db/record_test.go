@@ -12,7 +12,7 @@ var (
 	testNodeId = uint64(101)
 )
 
-func TestAcceptNewChunksIntoEmptyRecord(t *testing.T) {
+func TestMerge_AcceptNewChunksIntoEmptyRecord(t *testing.T) {
 	old := db.NewRecord(db.EmptyClock(), []*db.Chunk{})
 	newChunks := []*db.Chunk{
 		db.NewChunk(testNodeId, 1, time.Now(), []byte("test-data")),
@@ -26,7 +26,7 @@ func TestAcceptNewChunksIntoEmptyRecord(t *testing.T) {
 	require.Equal(t, newClock.ToWireType(), old.Clock.ToWireType())
 }
 
-func TestMergeEqualEntries(t *testing.T) {
+func TestMerge_EqualEntries(t *testing.T) {
 	c := db.From(map[uint64]uint64{
 		testNodeId: 1,
 	})
@@ -47,7 +47,7 @@ func TestMergeEqualEntries(t *testing.T) {
 	require.Equal(t, c.ToWireType(), current.Clock.ToWireType())
 }
 
-func TestRejectOutdataData(t *testing.T) {
+func TestMerge_RejectOutdataData(t *testing.T) {
 	c := db.From(map[uint64]uint64{
 		testNodeId: 1,
 	})
@@ -67,7 +67,7 @@ func TestRejectOutdataData(t *testing.T) {
 	require.Equal(t, c.ToWireType(), current.Clock.ToWireType())
 }
 
-func TestMergingNewDataFromSameNode(t *testing.T) {
+func TestMerge_NewDataFromSameNode(t *testing.T) {
 	startingClock := db.From(map[uint64]uint64{
 		testNodeId: 1,
 	})
@@ -91,7 +91,7 @@ func TestMergingNewDataFromSameNode(t *testing.T) {
 	require.Equal(t, newClock.ToWireType(), current.Clock.ToWireType())
 }
 
-func TestMergingConcurrentClocks(t *testing.T) {
+func TestMerge_ConcurrentClocks(t *testing.T) {
 	currentTime := time.Now()
 	startingClock := db.From(map[uint64]uint64{
 		testNodeId: 1,
@@ -118,7 +118,7 @@ func TestMergingConcurrentClocks(t *testing.T) {
 	require.Equal(t, []*db.Chunk{chunks[0], newChunks[0]}, current.Chunks)
 }
 
-func TestMergingRepeatedData(t *testing.T) {
+func TestMerge_RepeatedData(t *testing.T) {
 	currentTime := time.Now()
 	startingClock := db.From(map[uint64]uint64{
 		testNodeId: 1,
@@ -140,4 +140,21 @@ func TestMergingRepeatedData(t *testing.T) {
 
 	require.Equal(t, db.Equal, db.Order(newClock, current.Clock))
 	require.Equal(t, newChunks, current.Chunks)
+}
+
+func TestMerge_GetChunksSince(t *testing.T) {
+	currentTime := time.Now()
+	startingClock := db.From(map[uint64]uint64{
+		testNodeId: 2,
+	})
+	chunks := []*db.Chunk{
+		db.NewChunk(testNodeId, 1, currentTime.Add(time.Second), []byte("should-not-see")),
+		db.NewChunk(testNodeId, 2, currentTime.Add(time.Second*2), []byte("should-see")),
+	}
+	r := db.NewRecord(startingClock, chunks)
+
+	since := r.GetChunksSince(db.From(map[uint64]uint64{
+		testNodeId: 1,
+	}))
+	require.Equal(t, since, []*db.Chunk{chunks[1]})
 }

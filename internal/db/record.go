@@ -20,14 +20,6 @@ type Chunk struct {
 	data      []byte
 }
 
-func Concat(chunks []*Chunk) []byte {
-	var result []byte
-	for _, c := range chunks {
-		result = append(result, c.data...)
-	}
-	return result
-}
-
 func NewRecord(clock *Clock, chunks []*Chunk) *Record {
 	return &Record{
 		Clock:  clock,
@@ -111,7 +103,6 @@ func (r *Record) Update(nodeId, version uint64, updateTime time.Time, data []byt
 			break
 		}
 	}
-
 	r.Chunks = slices.Insert(r.Chunks, i, NewChunk(nodeId, version, updateTime, data))
 	r.Clock.set(nodeId, version)
 }
